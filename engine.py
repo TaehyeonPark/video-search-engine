@@ -2,15 +2,13 @@ import cv2
 from threading import Thread
 from time import time
 
-from random import randint
-
 from debug import Debug
+from pathlib import Path
 
-DEBUG = Debug(True, True)
-
+DEBUG = Debug(True, False)
 
 class Engine:
-    def __init__(self, img : str, vid : str, key : str = 'orb') -> None:
+    def __init__(self, img : Path, vid : Path, key : str = 'orb') -> None:
         self.source = [img, vid]
         self.img = cv2.imread(img)
         self.vid = cv2.VideoCapture(vid)
@@ -106,19 +104,23 @@ class Engine:
                 cnt += 1
             
             DEBUG.print(f"finished reading video {cnt}")
-            
             for thread in self.threads:
                 thread.join()
             self.threads = []
             DEBUG.print(f"[RESULT] finished joining threads {self.rtn}")
+
+            print(f"[RESULT] finished joining threads {self.rtn}")
             self.max_frame()
+            print(f"[RESULT] {self.rtn}")
             
             _end = time()
             DEBUG.print(f'Temporal time: {_end - _start}')
+            print(f'Temporal time: {_end - _start}')
         
         end = time()
         
         DEBUG.print(f'Total time: {end - start}')
+        print(f'Total time: {end - start}')
         
     def process(self, cnt, frame) -> int:
         if frame is None:
@@ -130,7 +132,7 @@ class Engine:
                 DEBUG.print(f"[ERROR] | {e}")
             return 1
 
-    def max_frame(self) -> int:
+    def max_frame(self) -> tuple:
         j = (0, 0)
         for i in self.rtn:
             if i[1] > j[1]:
@@ -138,6 +140,7 @@ class Engine:
         self._clear()
         self._enqueue(j[0],j[1])
         DEBUG.print(f"max frame: {self.rtn}")
+        return (j[0],j[1])
 
     def _enqueue(self, x : int, y : int) -> None:
         self.rtn.append((int(x), int(y)))
@@ -161,5 +164,9 @@ class Engine:
         return algorithm.detectAndCompute(img, None)
         
 if __name__ == "__main__":
-    engine = Engine("img.png", "vid.mp4")
-    engine.start()
+    try:    
+        engine = Engine("img.png", "vid.mp4")
+        engine.start()
+    except Exception as e:
+        DEBUG.print(f"[ERROR] | {e}")
+        exit()
